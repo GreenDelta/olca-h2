@@ -8,6 +8,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class SimpleH2Test {
 
@@ -25,10 +28,7 @@ public class SimpleH2Test {
 
 	@Test
 	public void testWithConnectionPool() throws Exception {
-		HikariDataSource pool = new HikariDataSource();
-		pool.setJdbcUrl(url);
-		pool.setUsername("sa");
-		pool.setPassword("");
+		HikariDataSource pool = createPool();
 		try (Connection con = pool.getConnection()) {
 			setupTable(con);
 		}
@@ -37,6 +37,35 @@ public class SimpleH2Test {
 		}
 		pool.close();
 	}
+
+	@Test
+	public void testParallelConnections() throws Exception {
+		HikariDataSource pool = createPool();
+		try (Connection con = pool.getConnection()) {
+			setupTable(con);
+		}
+		ExecutorService exec = Executors.newFixedThreadPool(16);
+		for (int i = 0; i < 1_000_000; i++ ) {
+			exec.execute(() -> {
+				try (Connection con = pool.getConnection()) {
+					checkValues(con);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			});
+		}
+		exec.shutdown();
+		exec.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+	}
+
+	private HikariDataSource createPool() {
+		HikariDataSource pool = new HikariDataSource();
+		pool.setJdbcUrl(url);
+		pool.setUsername("sa");
+		pool.setPassword("");
+		return pool;
+	}
+
 
 	private void setupTable(Connection con) throws Exception {
 		Statement stmt = con.createStatement();
