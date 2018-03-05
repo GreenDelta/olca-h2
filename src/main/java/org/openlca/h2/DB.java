@@ -59,7 +59,7 @@ public class DB extends Notifiable implements IDatabase {
 	private DB() {
 		registerDriver();
 		name = "memdb" + memInstances.incrementAndGet();
-		url = "jdbc:h2:mem:" + name + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+		url = "jdbc:h2:nioMemFS:" + name + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
 		pool = new HikariDataSource();
 		pool.setJdbcUrl(url);
 		pool.setUsername("sa");

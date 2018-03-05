@@ -1,9 +1,9 @@
 # olca-h2
 `olca-h2` provides an implementation of the openLCA `IDatabase` interface using
-an in-memory instance of an [H2](http://www.h2database.com) database. In import
+an in-memory instance of an [H2](http://www.h2database.com) database. The import
 into `olca-h2` is ~twice as fast compared to an import into a file based Derby
 database in openLCA (on a modern SSD drive). Additionally, you can dump such
-an `olca-h2` database to a file and reload it into memory later. 
+an `olca-h2` database to a file and reload it into memory later (see below). 
 
 ## Usage
 Install the [openLCA core modules](https://github.com/GreenDelta/olca-modules)
