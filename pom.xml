@@ -5,30 +5,31 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <olca.version>1.7.0</olca.version>
     </properties>
 
     <groupId>org.openlca</groupId>
     <artifactId>olca-h2</artifactId>
-    <version>0.0.1</version>
+    <version>1.7.0</version>
 
     <dependencies>
 
         <dependency>
             <groupId>org.openlca</groupId>
             <artifactId>olca-core</artifactId>
-            <version>1.7.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.196</version>
+            <version>${olca.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.derby</groupId>
                     <artifactId>derby</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.196</version>
         </dependency>
 
         <dependency>
