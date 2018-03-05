@@ -31,7 +31,7 @@ public class DB extends Notifiable implements IDatabase {
 	private final AtomicBoolean closed = new AtomicBoolean(false);
 	private final String url;
 	private final String name;
-	private HikariDataSource connectionPool;
+	private final HikariDataSource pool;
 	private EntityManagerFactory entityFactory;
 	private File fileStorage;
 
@@ -44,6 +44,10 @@ public class DB extends Notifiable implements IDatabase {
 		registerDriver();
 		name = "memdb" + memInstances.incrementAndGet();
 		url = "jdbc:h2:mem:" + name + ";MODE=MySQL";
+		pool = new HikariDataSource();
+		pool.setJdbcUrl(url);
+		pool.setUsername("sa");
+		pool.setPassword("");
 		createNew(url);
 		connect();
 	}
@@ -53,8 +57,6 @@ public class DB extends Notifiable implements IDatabase {
 		try {
 			fileStorage = Files.createTempDirectory("_olca_h2").toFile();
 			log.info("files will be stored in {}; and deleted on close");
-			Connection con = DriverManager.getConnection(url);
-			con.close();
 			ScriptRunner runner = new ScriptRunner(this);
 			InputStream ddl = getClass().getResourceAsStream("schema.sql");
 			runner.run(ddl, "utf-8");
@@ -68,38 +70,21 @@ public class DB extends Notifiable implements IDatabase {
 	private void connect() {
 		log.trace("connect to database: {}", url);
 		Map<Object, Object> map = new HashMap<>();
-		map.put("javax.persistence.jdbc.url", url);
-		map.put("javax.persistence.jdbc.driver",
-				"org.apache.derby.jdbc.EmbeddedDriver");
+		map.put("javax.persistence.jtaDataSource", pool);
 		map.put("eclipselink.classloader", getClass().getClassLoader());
-		map.put("eclipselink.target-database", "Derby");
+		map.put("eclipselink.target-database", "HSQL");
+		map.put("transaction-type", "JTA");
 		entityFactory = new PersistenceProvider().createEntityManagerFactory(
-				"openLCA", map);
-		initConnectionPool();
-	}
-
-	private void initConnectionPool() {
-		try {
-			connectionPool = new HikariDataSource();
-			connectionPool.setJdbcUrl(url);
-		} catch (Exception e) {
-			log.error("failed to initialize connection pool", e);
-			throw new DatabaseException("Could not create a connection", e);
-		}
+				"olcaH2", map);
 	}
 
 	@Override
 	public Connection createConnection() {
 		log.trace("create connection: {}", url);
 		try {
-			if (connectionPool != null) {
-				Connection con = connectionPool.getConnection();
-				con.setAutoCommit(false);
-				return con;
-			} else {
-				log.warn("no connection pool set up for {}", url);
-				return DriverManager.getConnection(url);
-			}
+			Connection con = pool.getConnection();
+			con.setAutoCommit(false);
+			return con;
 		} catch (Exception e) {
 			log.error("Failed to create database connection", e);
 			return null;
@@ -138,9 +123,8 @@ public class DB extends Notifiable implements IDatabase {
 				entityFactory.close();
 				entityFactory = null;
 			}
-			if (connectionPool != null && !connectionPool.isClosed()) {
-				connectionPool.close();
-				connectionPool = null;
+			if (pool != null && !pool.isClosed()) {
+				pool.close();
 			}
 			Connection con = DriverManager.getConnection(url);
 			con.createStatement().execute("SHUTDOWN");

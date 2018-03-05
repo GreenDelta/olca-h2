@@ -90,5 +90,4 @@ public class SimpleH2Test {
 		con.close();
 		Assert.assertEquals(3, i);
 	}
-
 }
