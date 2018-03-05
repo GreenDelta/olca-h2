@@ -59,7 +59,7 @@ public class DB extends Notifiable implements IDatabase {
 	private DB() {
 		registerDriver();
 		name = "memdb" + memInstances.incrementAndGet();
-		url = "jdbc:h2:mem:" + name + ";MODE=MySQL";
+		url = "jdbc:h2:mem:" + name + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
 		pool = new HikariDataSource();
 		pool.setJdbcUrl(url);
 		pool.setUsername("sa");
@@ -148,11 +148,11 @@ public class DB extends Notifiable implements IDatabase {
 				entityFactory = null;
 			}
 			if (pool != null && !pool.isClosed()) {
+				Connection con = createConnection();
+				Statement stmt = con.createStatement();
+				stmt.execute("SHUTDOWN");
 				pool.close();
 			}
-			Connection con = DriverManager.getConnection(url);
-			con.createStatement().execute("SHUTDOWN");
-			con.close();
 			System.gc();
 			if (fileStorage != null)
 				Dirs.delete(fileStorage.getPath());

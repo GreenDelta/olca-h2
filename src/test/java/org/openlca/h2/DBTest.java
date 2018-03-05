@@ -25,6 +25,7 @@ public class DBTest {
 		});
 		Assert.assertTrue("There should be more than 30 tables in the database",
 				count.get() > 30);
+		db.close();
 	}
 
 	@Test
@@ -42,7 +43,7 @@ public class DBTest {
 	}
 
 	@Test
-	public void testDescriptor() {
+	public void testDescriptor() throws Exception {
 		IDatabase db = DB.empty();
 		Flow flow = new Flow();
 		flow.setName("A test flow");
@@ -50,7 +51,8 @@ public class DBTest {
 		FlowDao dao = new FlowDao(db);
 		dao.insert(flow);
 		FlowDescriptor d = dao.getDescriptor(flow.getId());
-		Assert.assertEquals(flow.getRefId(), d.getRefId());	
+		Assert.assertEquals(flow.getRefId(), d.getRefId());
+		db.close();
 	}
 
 	@Test
