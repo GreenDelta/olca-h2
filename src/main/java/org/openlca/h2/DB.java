@@ -154,7 +154,8 @@ public class DB extends Notifiable implements IDatabase {
 			con.createStatement().execute("SHUTDOWN");
 			con.close();
 			System.gc();
-			Dirs.delete(fileStorage.getPath());
+			if (fileStorage != null)
+				Dirs.delete(fileStorage.getPath());
 		} catch (Exception e) {
 			log.error("failed to close H2 database", e);
 		}

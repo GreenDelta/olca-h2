@@ -8,6 +8,8 @@ import org.openlca.core.database.NativeSql;
 import org.openlca.core.model.Flow;
 import org.openlca.core.model.descriptors.FlowDescriptor;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DBTest {
@@ -59,13 +61,16 @@ public class DBTest {
 		flow.setRefId("a-test-flow");
 		FlowDao dao = new FlowDao(empty);
 		dao.insert(flow);
-		empty.dump("dump.gz");
+
+		Path temp = Files.createTempFile("_olca_h2_dump", ".gz");
+		empty.dump(temp.toString());
 		empty.close();
 
-		IDatabase dump = DB.fromDump("dump.gz");
+		IDatabase dump = DB.fromDump(temp.toString());
 		dao = new FlowDao(dump);
 		Flow clone = dao.getForRefId("a-test-flow");
 		Assert.assertEquals(flow, clone);
 		dump.close();
+		Files.delete(temp);
 	}
 }
