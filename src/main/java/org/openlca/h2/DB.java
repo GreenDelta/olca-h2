@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,9 +36,24 @@ public class DB extends Notifiable implements IDatabase {
 	private EntityManagerFactory entityFactory;
 	private File fileStorage;
 
+	public static DB empty() {
+		DB db = new DB();
+		db.createNew();
+		db.connectJPA();
+		return db;
+	}
 
-	public static DB inMempory() {
-		return new DB();
+	public static DB fromDump(String file) {
+		DB db = new DB();
+		try (Connection con = db.createConnection()) {
+			Statement stmt = con.createStatement();
+			stmt.execute("RUNSCRIPT FROM '" + file + "' COMPRESSION GZIP");
+			stmt.close();
+			db.connectJPA();
+			return db;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private DB() {
@@ -48,11 +64,9 @@ public class DB extends Notifiable implements IDatabase {
 		pool.setJdbcUrl(url);
 		pool.setUsername("sa");
 		pool.setPassword("");
-		createNew(url);
-		connect();
 	}
 
-	private void createNew(String url) {
+	private void createNew() {
 		log.info("create new H database {}", url);
 		try {
 			fileStorage = Files.createTempDirectory("_olca_h2").toFile();
@@ -67,7 +81,7 @@ public class DB extends Notifiable implements IDatabase {
 		}
 	}
 
-	private void connect() {
+	private void connectJPA() {
 		log.trace("connect to database: {}", url);
 		Map<Object, Object> map = new HashMap<>();
 		map.put("javax.persistence.jtaDataSource", pool);
@@ -112,6 +126,16 @@ public class DB extends Notifiable implements IDatabase {
 	@Override
 	public int getVersion() {
 		return DbUtils.getVersion(this);
+	}
+
+	public void dump(String file) {
+		try (Connection con = createConnection()) {
+			Statement stmt = con.createStatement();
+			stmt.execute("SCRIPT TO '" + file + "' COMPRESSION GZIP");
+			stmt.close();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override

@@ -1,6 +1,8 @@
 # olca-h2
 `olca-h2` provides an implementation of the openLCA `IDatabase` interface using
-an in-memory instance of an [H2](http://www.h2database.com) database.
+an in-memory instance of an [H2](http://www.h2database.com) database. In import
+into `olca-h2` is ~twice as fast compared to an import into a file based Derby
+database in openLCA (on a modern SSD drive). 
 
 ## Usage
 Install the [openLCA core modules](https://github.com/GreenDelta/olca-modules)
@@ -18,7 +20,6 @@ After this you can use `olca-h2` e.g. as plain Maven dependency:
 ```xml
 ...
 <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <olca.version>1.7.0</olca.version>
 </properties>
 ...
@@ -47,7 +48,7 @@ After this you can use `olca-h2` e.g. as plain Maven dependency:
 import org.openlca.core.database.IDatabase;
 import org.openlca.h2.DB;
 
-IDatabase db = DB.inMempory();
+IDatabase db = DB.empty();
 // use it like a standard openLCA database
 ```
 
